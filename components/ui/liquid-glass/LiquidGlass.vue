@@ -9,7 +9,7 @@
       <slot />
     </div>
 
-    <svg class="filter" xmlns="http://www.w3.org/2000/svg">
+    <svg v-if="!isSafari" class="filter" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter :id="uniqueId" color-interpolation-filters="sRGB">
           <feImage
@@ -82,11 +82,15 @@ import {
   onUnmounted,
   ref,
   useId,
+  reactive,
 } from "vue";
 import { cn } from "~/lib/utils";
 
 // Generate unique ID for this component instance
 const uniqueId = ref(`displacementFilter_${useId()}`);
+
+// Safari detection
+const isSafari = ref(false);
 
 interface Props {
   radius?: number;
@@ -116,7 +120,7 @@ const props = withDefaults(defineProps<Props>(), {
   xChannel: "R",
   yChannel: "B",
   alpha: 0.93,
-  blur: 11,
+  blur: 7,
   rOffset: 0,
   gOffset: 10,
   bOffset: 20,
@@ -141,6 +145,11 @@ const baseStyle = computed(() => {
 });
 
 const filterStyle = computed(() => {
+  if (isSafari.value) {
+    return {
+      "backdrop-filter": `blur(${props.blur}px)`,
+    };
+  }
   return {
     "backdrop-filter": `url(#${uniqueId.value})`,
   };
@@ -199,6 +208,9 @@ const displacementDataUri = computed(() => {
 
 // Lifecycle hooks
 onMounted(() => {
+  // Detect Safari
+  isSafari.value = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
   if (!liquidGlassRoot.value) return;
 
   observer = new ResizeObserver((entries) => {
@@ -235,7 +247,7 @@ onUnmounted(() => {
   display: block;
   opacity: 1;
   will-change: width, height;
-  backdrop-filter: blur(1000px);
+
   background: light-dark(
     hsl(0 0% 100% / var(--frost, 0)),
     hsl(0 0% 0% / var(--frost, 0))

@@ -1,10 +1,10 @@
 <template>
   <div
     ref="logoRef"
-    class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-300 ease-in-out whitespace-nowrap"
+    class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      // 'bounce-open': isHovered && bounceOpen,
-      // 'bounce-close': !isHovered && bounceClose,
+      'bounce-open': isHovered && bounceOpen,
+      'bounce-close': !isHovered && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
     }"
     :style="mainStyle"
@@ -15,7 +15,7 @@
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
       <div
-        class="header h-[57px] absolute top-0 left-0 transition-all duration-300 ease-in-out"
+        class="header h-[57px] absolute top-0 left-0 transition-all duration-200 ease-in-out"
         :class="{
           'text-[10px]  px-[12px] py-[7px]': route.path !== '/',
           'px-[25px] py-[18px]': route.path === '/',
@@ -24,7 +24,7 @@
         Noah Böhm
       </div>
       <div
-        class="info-wrap w-fit overflow-y-hidden transition-all duration-300 relative top-[57px]"
+        class="info-wrap w-fit overflow-y-hidden transition-all duration-200 relative top-[57px]"
         :style="{
           height: isHovered ? infoHeight + 'px' : '0px',
           width: isHovered ? infoWidth + 'px' : '0px',
