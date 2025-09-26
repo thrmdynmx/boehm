@@ -120,7 +120,7 @@ const props = withDefaults(defineProps<Props>(), {
   xChannel: "R",
   yChannel: "B",
   alpha: 0.93,
-  blur: 11,
+  blur: 50,
   rOffset: 0,
   gOffset: 10,
   bOffset: 20,
