@@ -120,7 +120,7 @@ const props = withDefaults(defineProps<Props>(), {
   xChannel: "R",
   yChannel: "B",
   alpha: 0.93,
-  blur: 50,
+  blur: 10,
   rOffset: 0,
   gOffset: 10,
   bOffset: 20,
@@ -147,7 +147,7 @@ const baseStyle = computed(() => {
 const filterStyle = computed(() => {
   if (isSafari.value) {
     return {
-      "backdrop-filter": `blur(${props.blur}px)`,
+      "backdrop-filter": `blur(50px)`,
     };
   }
   return {
