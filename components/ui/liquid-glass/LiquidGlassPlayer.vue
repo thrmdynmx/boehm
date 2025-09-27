@@ -149,7 +149,7 @@ const baseStyle = computed(() => {
 const filterStyle = computed(() => {
   if (isSafari.value) {
     return {
-      "backdrop-filter": `blur(50px)`,
+      "backdrop-filter": `blur(10px)`,
     };
   }
   return {
