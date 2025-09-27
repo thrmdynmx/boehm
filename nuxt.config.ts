@@ -44,7 +44,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: "Tobias Blickle",
+      title: "Noah Böhm",
       link: [
         {
           rel: "icon",
@@ -54,7 +54,7 @@ export default defineNuxtConfig({
       meta: [
         {
           name: "description",
-          content: "Cinematographer",
+          content: "",
         },
       ],
       htmlAttrs: {
