@@ -210,8 +210,10 @@ const displacementDataUri = computed(() => {
 
 // Lifecycle hooks
 onMounted(() => {
-  // Detect Safari
-  isSafari.value = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  // Detect Safari or Firefox
+  isSafari.value =
+    /^((?!chrome|android).)*safari/i.test(navigator.userAgent) ||
+    /firefox/i.test(navigator.userAgent);
 
   if (!liquidGlassRoot.value) return;
 
