@@ -13,6 +13,8 @@ interface PortableTextBlock {
 interface InfoData {
   _id: string;
   info: PortableTextBlock[];
+  mainFilm: string;
+  _updatedAt: string;
 }
 
 export const useInfoStore = defineStore("info", {

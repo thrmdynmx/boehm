@@ -1,7 +1,8 @@
 <template>
   <div>
     <VideoBackground
-      :src="videoSrc"
+      v-if="infoStore.info?.mainFilm"
+      :src="infoStore.info?.mainFilm"
       :class="route.path !== '/' ? 'hide-video' : 'show-video'"
     />
 
@@ -29,11 +30,13 @@
 
 <script setup>
 import { useProjectsStore } from "~/stores/projects";
+import { useInfoStore } from "~/stores/info";
 
 import { useRoute } from "vue-router";
 import { onMounted, ref } from "vue";
 
 const projectsStore = useProjectsStore();
+const infoStore = useInfoStore();
 
 const route = useRoute();
 
@@ -43,7 +46,7 @@ const videoSrc = computed(() => {
 
 onMounted(async () => {
   await projectsStore.fetchProjectsData();
-  console.log(projectsStore.projects);
+  await infoStore.fetchInfoData();
 });
 </script>
 

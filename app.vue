@@ -11,6 +11,12 @@ import Blob from "~/components/ui/liquid-glass/Blob.vue";
 </script>
 
 <style>
+html,
+body {
+  overflow: hidden;
+  height: 100dvh;
+}
+
 body {
   font-family: Inter, sans-serif;
   -webkit-font-smoothing: antialiased;
