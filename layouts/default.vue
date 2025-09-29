@@ -13,7 +13,7 @@
 
       <div
         class="spacer transition-all duration-500"
-        :class="route.path !== '/' ? 'h-[85dvh]' : 'h-[20px]'"
+        :class="route.path !== '/' ? 'md:h-[85dvh] h-[70dvh]' : 'h-[20px]'"
       ></div>
 
       <Projects

@@ -3,8 +3,10 @@
     ref="logoRef"
     class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
-      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
+      'bounce-open':
+        (isHovered || (isMobile && mobileStore.isMainOpen)) && bounceOpen,
+      'bounce-close':
+        !isHovered && !(isMobile && mobileStore.isMainOpen) && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
     }"
     :style="mainStyle"
@@ -27,9 +29,13 @@
         class="info-wrap w-fit overflow-y-hidden transition-all duration-200 relative top-[57px]"
         :style="{
           height:
-            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
+            isHovered || (isMobile && mobileStore.isMainOpen)
+              ? infoHeight + 'px'
+              : '0px',
           width:
-            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
+            isHovered || (isMobile && mobileStore.isMainOpen)
+              ? infoWidth + 'px'
+              : '0px',
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
@@ -47,6 +53,7 @@ import RichText from "./RichText.vue";
 import { useRoute, useRouter } from "vue-router";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useInfoStore } from "~/stores/info";
+import { useMobileStore } from "~/stores/mobile";
 
 const route = useRoute();
 const router = useRouter();
@@ -54,7 +61,6 @@ const router = useRouter();
 const logoRef = ref(null);
 const infoRef = ref(null);
 const isHovered = ref(false);
-const isMobileOpen = ref(false);
 const infoHeight = ref(0);
 const infoWidth = ref(0);
 const bounceOpen = ref(false);
@@ -62,6 +68,7 @@ const bounceClose = ref(false);
 const isMobile = ref(false);
 
 const infoStore = useInfoStore();
+const mobileStore = useMobileStore();
 
 // Mobile detection
 const detectMobile = () => {
@@ -156,7 +163,7 @@ const mainStyle = computed(() => {
       width: "80px",
       height: "28px",
     };
-  } else if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
+  } else if (isHovered.value || (isMobile.value && mobileStore.isMainOpen)) {
     return {
       height: `${78 + infoHeight.value}px`,
       width: `${Math.max(128.56, infoWidth.value) + 50}px`,
@@ -210,7 +217,7 @@ const handleMouseLeave = () => {
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
-    isMobileOpen.value &&
+    mobileStore.isMainOpen &&
     logoRef.value &&
     !logoRef.value.contains(event.target)
   ) {
@@ -221,7 +228,7 @@ const handleClickAway = (event) => {
 // Mobile-specific handlers
 const handleMobileOpen = () => {
   if (isMobile.value && route.path === "/") {
-    isMobileOpen.value = true;
+    mobileStore.openMain();
 
     // Trigger bounce after the transition completes (100ms)
     setTimeout(() => {
@@ -236,7 +243,7 @@ const handleMobileOpen = () => {
 
 const handleMobileClose = () => {
   if (isMobile.value) {
-    isMobileOpen.value = false;
+    mobileStore.closeMain();
 
     // Trigger bounce after the transition completes (100ms)
     setTimeout(() => {
@@ -254,7 +261,7 @@ const handleClick = (event) => {
     router.push("/");
   } else if (isMobile.value && route.path === "/") {
     event.stopPropagation();
-    if (isMobileOpen.value) {
+    if (mobileStore.isMainOpen) {
       handleMobileClose();
     } else {
       handleMobileOpen();
