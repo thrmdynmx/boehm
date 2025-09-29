@@ -41,17 +41,13 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
-          'pointer-events':
-            isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
+          'pointer-events': contentInteractive ? 'auto' : 'none',
         }"
       >
         <div
           ref="projectsRef"
           class="projects space-y-1 whitespace-nowrap pb-[18px] px-[25px]"
-          :style="{
-            'pointer-events':
-              isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
-          }"
+          :style="{ 'pointer-events': contentInteractive ? 'auto' : 'none' }"
         >
           <NuxtLink
             v-for="(project, index) in projects"
@@ -71,10 +67,7 @@
 <script setup>
 import Blob from "../components/ui/liquid-glass/Blob.vue";
 
-const testTitle = "testi";
-
 const projectsStore = useProjectsStore();
-
 const projects = computed(() => projectsStore.projects);
 
 const route = useRoute();
@@ -94,8 +87,9 @@ const shouldUseDynamicWidth = ref(false);
 const currentProjectTitle = ref("");
 const isLastProject = ref(false);
 const isMobile = ref(false);
+const contentInteractive = ref(false); // NEW
 
-// Mobile detection
+// Detect mobile
 const detectMobile = () => {
   isMobile.value =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -105,170 +99,111 @@ const detectMobile = () => {
     "ontouchstart" in window;
 };
 
-// Function to handle project click
+// Project click
 const handleProjectClick = async (projectTitle, projectIndex) => {
-  // Update the current project title
   currentProjectTitle.value = projectTitle;
-
-  // Check if this is the last project
   isLastProject.value = projectIndex === projects.value.length - 1;
-
-  // Wait for DOM update and then measure the new width
   await nextTick();
   await measureProjectTitleWidth();
 };
 
-// Function to measure project title width
+// Measure widths
 const measureProjectTitleWidth = async () => {
   await nextTick();
-
   if (projectTitleRef.value) {
-    // Temporarily make the element visible to measure its natural dimensions
     const originalStyle = projectTitleRef.value.style.cssText;
     projectTitleRef.value.style.width = "auto";
     projectTitleRef.value.style.visibility = "hidden";
     projectTitleRef.value.style.position = "absolute";
-
-    // Force a reflow to ensure the element is rendered
     projectTitleRef.value.offsetWidth;
-
-    // Now measure the width
     projectTitleWidth.value = projectTitleRef.value.offsetWidth;
-
-    // Restore original styles
     projectTitleRef.value.style.cssText = originalStyle;
   }
 };
 
-// Function to measure projects dimensions
 const measureProjectsDimensions = async () => {
   await nextTick();
-
-  // Get the height and width of the projects element
   if (projectsRef.value) {
-    // Temporarily make the element visible to measure its natural dimensions
     const originalStyle = projectsRef.value.style.cssText;
     projectsRef.value.style.width = "auto";
     projectsRef.value.style.height = "auto";
     projectsRef.value.style.visibility = "hidden";
     projectsRef.value.style.position = "absolute";
-
-    // Force a reflow to ensure the element is rendered
     projectsRef.value.offsetHeight;
-
-    // Now measure the dimensions
     infoHeight.value = projectsRef.value.offsetHeight;
     infoWidth.value = projectsRef.value.offsetWidth;
-
-    // Restore original styles
     projectsRef.value.style.cssText = originalStyle;
   }
 };
 
-// Watch for when projects are loaded and recalculate dimensions
+// Watch projects
 watch(
   () => projectsStore.isLoaded,
   async (isLoaded) => {
     if (isLoaded) {
       await measureProjectsDimensions();
-
-      // Set project title based on current slug if not on home page
       if (route.path !== "/") {
         const currentSlug = route.params.slug;
-        if (currentSlug) {
-          setProjectTitleFromSlug(currentSlug);
-        }
+        if (currentSlug) setProjectTitleFromSlug(currentSlug);
       }
     }
   },
   { immediate: true }
 );
 
-// Function to set current project title based on slug
 const setProjectTitleFromSlug = (slug) => {
   if (slug && projects.value.length > 0) {
     const project = projects.value.find((p) => p.slug === slug);
-    if (project) {
-      currentProjectTitle.value = project.title;
-    }
+    if (project) currentProjectTitle.value = project.title;
   }
 };
 
-// Fetch projects data on mount
+// Mount
 onMounted(async () => {
   detectMobile();
-
-  // Add click-away listener for mobile
   if (isMobile.value) {
     document.addEventListener("click", handleClickAway);
   }
-
-  // Fetch projects data first
   await projectsStore.fetchProjectsData();
-
-  // Measure projects dimensions (will be recalculated when projects load)
   await measureProjectsDimensions();
-
-  // Measure project title width on mount
   await measureProjectTitleWidth();
-
-  // Set initial shouldUseDynamicWidth based on current route
   if (route.path !== "/") {
     shouldUseDynamicWidth.value = true;
-    // Set project title based on current slug
     const currentSlug = route.params.slug;
-    if (currentSlug) {
-      setProjectTitleFromSlug(currentSlug);
-    }
+    if (currentSlug) setProjectTitleFromSlug(currentSlug);
   }
 });
 
-// Computed property to determine if we should use dynamic width
 const isNotIndexPage = computed(() => route.path !== "/");
 
-// Watch for route changes to remeasure project title width
+// Watch routes
 watch(
   () => route.path,
   async (newPath, oldPath) => {
-    // Clear any existing timeout
-    if (widthTransitionTimeout.value) {
+    if (widthTransitionTimeout.value)
       clearTimeout(widthTransitionTimeout.value);
-    }
-
-    // Set project title based on new slug if not on home page
     if (newPath !== "/") {
       const newSlug = route.params.slug;
-      if (newSlug) {
-        setProjectTitleFromSlug(newSlug);
-      }
+      if (newSlug) setProjectTitleFromSlug(newSlug);
     }
-
-    // If leaving index page, wait before measuring and changing width
     if (oldPath === "/" && newPath !== "/") {
-      // Immediately set to not use dynamic width (keeps 166.73px)
       shouldUseDynamicWidth.value = false;
-
       handleMouseLeave();
-
       widthTransitionTimeout.value = setTimeout(async () => {
         await measureProjectTitleWidth();
-        // Now enable dynamic width after measurement
         shouldUseDynamicWidth.value = true;
       }, 100);
     } else if (newPath === "/") {
-      // Going back to index page - immediately use static width
       shouldUseDynamicWidth.value = false;
       await measureProjectTitleWidth();
     } else {
-      // For other route changes, measure immediately and use dynamic width
       await measureProjectTitleWidth();
       shouldUseDynamicWidth.value = true;
     }
-  },
-  { immediate: false }
+  }
 );
 
-// Computed properties for main style
+// Computed style
 const mainStyle = computed(() => {
   if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
@@ -276,54 +211,35 @@ const mainStyle = computed(() => {
       width: `${Math.max(166.73, infoWidth.value)}px`,
     };
   } else {
-    // Use project title width + 50px padding when not on index page and shouldUseDynamicWidth is true, otherwise use default 166.73px
     const baseWidth =
       isNotIndexPage.value && shouldUseDynamicWidth.value
         ? projectTitleWidth.value + 50
         : 166.73;
-    return {
-      height: "57px",
-      width: `${baseWidth}px`,
-    };
+    return { height: "57px", width: `${baseWidth}px` };
   }
 });
 
-// Hover event handlers
+// Hover
 const handleMouseEnter = () => {
-  // Reset bounce states
   bounceOpen.value = false;
   bounceClose.value = false;
-
   isHovered.value = true;
-
-  // Trigger bounce after the transition completes (100ms)
   setTimeout(() => {
     bounceOpen.value = true;
-    // Reset bounce after animation completes (300ms)
-    setTimeout(() => {
-      bounceOpen.value = false;
-    }, 300);
+    setTimeout(() => (bounceOpen.value = false), 300);
   }, 100);
 };
-
 const handleMouseLeave = () => {
-  // Reset bounce states
   bounceOpen.value = false;
   bounceClose.value = false;
-
   isHovered.value = false;
-
-  // Trigger bounce after the transition completes (100ms)
   setTimeout(() => {
     bounceClose.value = true;
-    // Reset bounce after animation completes (300ms)
-    setTimeout(() => {
-      bounceClose.value = false;
-    }, 300);
+    setTimeout(() => (bounceClose.value = false), 300);
   }, 100);
 };
 
-// Click-away handler for mobile
+// Click-away
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
@@ -335,26 +251,19 @@ const handleClickAway = (event) => {
   }
 };
 
-// Simple mobile toggle handler
+// Mobile toggle
 const handleMobileToggle = () => {
-  // Only work on mobile devices
   if (!isMobile.value) return;
-
   if (route.path === "/") {
-    // Close other component if it's open
     const mainElement = document.querySelector(".main.active");
     if (mainElement) {
       const mainComponent = mainElement.__vueParentComponent;
       if (mainComponent?.exposed?.handleMobileClose) {
         mainComponent.exposed.handleMobileClose();
       }
-      // Add delay to prevent link clicks from triggering
-      setTimeout(() => {
-        toggleThisComponent();
-      }, 50);
+      setTimeout(() => toggleThisComponent(), 50);
       return;
     }
-
     toggleThisComponent();
   }
 };
@@ -362,43 +271,34 @@ const handleMobileToggle = () => {
 const toggleThisComponent = () => {
   if (isMobileOpen.value) {
     isMobileOpen.value = false;
-    // Trigger bounce close
+    contentInteractive.value = false;
     setTimeout(() => {
       bounceClose.value = true;
-      setTimeout(() => {
-        bounceClose.value = false;
-      }, 300);
+      setTimeout(() => (bounceClose.value = false), 300);
     }, 100);
   } else {
     isMobileOpen.value = true;
-    // Trigger bounce open
+    contentInteractive.value = false;
+    setTimeout(() => (contentInteractive.value = true), 300); // enable after bounce
     setTimeout(() => {
       bounceOpen.value = true;
-      setTimeout(() => {
-        bounceOpen.value = false;
-      }, 300);
+      setTimeout(() => (bounceOpen.value = false), 300);
     }, 100);
   }
 };
 
-// Simple close function for external calls
 const handleMobileClose = () => {
   if (!isMobile.value) return;
   isMobileOpen.value = false;
-
-  // Trigger bounce close
+  contentInteractive.value = false;
   setTimeout(() => {
     bounceClose.value = true;
-    setTimeout(() => {
-      bounceClose.value = false;
-    }, 300);
+    setTimeout(() => (bounceClose.value = false), 300);
   }, 100);
 };
 
 const handleClick = (event) => {
-  // Only handle mobile clicks if we're on mobile
   if (!isMobile.value) return;
-
   if (route.path === "/") {
     event.preventDefault();
     event.stopPropagation();
@@ -406,7 +306,7 @@ const handleClick = (event) => {
   }
 };
 
-// Watch for route changes to close mobile state when leaving "/"
+// Close on route change
 watch(
   () => route.path,
   (newPath) => {
@@ -416,12 +316,9 @@ watch(
   }
 );
 
-// Cleanup timeout on unmount
+// Cleanup
 onUnmounted(() => {
-  if (widthTransitionTimeout.value) {
-    clearTimeout(widthTransitionTimeout.value);
-  }
-
+  if (widthTransitionTimeout.value) clearTimeout(widthTransitionTimeout.value);
   if (isMobile.value) {
     document.removeEventListener("click", handleClickAway);
   }
@@ -442,7 +339,6 @@ defineExpose({ logoRef, handleMobileClose });
     transform: scale(1);
   }
 }
-
 @keyframes bounceClose {
   0% {
     transform: scale(1);
@@ -454,15 +350,12 @@ defineExpose({ logoRef, handleMobileClose });
     transform: scale(1);
   }
 }
-
 .bounce-open {
   animation: bounceOpen 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 .bounce-close {
   animation: bounceClose 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 .project-item {
   display: block;
 }

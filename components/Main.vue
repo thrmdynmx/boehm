@@ -31,17 +31,13 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
-          'pointer-events':
-            isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
+          'pointer-events': contentInteractive ? 'auto' : 'none',
         }"
       >
         <div
           ref="infoRef"
           class="info space-y-1 whitespace-nowrap"
-          :style="{
-            'pointer-events':
-              isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
-          }"
+          :style="{ 'pointer-events': contentInteractive ? 'auto' : 'none' }"
         >
           <!-- text here -->
           <RichText v-if="infoData && infoData.info" :content="infoData.info" />
@@ -70,6 +66,7 @@ const infoWidth = ref(0);
 const bounceOpen = ref(false);
 const bounceClose = ref(false);
 const isMobile = ref(false);
+const contentInteractive = ref(false); // NEW: control pointer-events
 
 const infoStore = useInfoStore();
 
@@ -87,38 +84,30 @@ const detectMobile = () => {
 onMounted(async () => {
   detectMobile();
 
-  // Add click-away listener for mobile
   if (isMobile.value) {
     document.addEventListener("click", handleClickAway);
   }
 
   await infoStore.fetchInfoData();
-
-  // Wait for next tick to ensure DOM is updated
   await nextTick();
 
-  // Get the height and width of the info element
   if (infoRef.value) {
-    // Temporarily make the element visible to measure its natural dimensions
     const originalStyle = infoRef.value.style.cssText;
     infoRef.value.style.width = "auto";
     infoRef.value.style.height = "auto";
     infoRef.value.style.visibility = "hidden";
     infoRef.value.style.position = "absolute";
 
-    // Force a reflow to ensure the element is rendered
     infoRef.value.offsetHeight;
 
-    // Now measure the dimensions
     infoHeight.value = infoRef.value.offsetHeight;
     infoWidth.value = infoRef.value.offsetWidth;
 
-    // Restore original styles
     infoRef.value.style.cssText = originalStyle;
   }
 });
 
-// Watch for route changes to close mobile state when leaving "/"
+// Watch for route changes
 watch(
   () => route.path,
   (newPath) => {
@@ -128,105 +117,77 @@ watch(
   }
 );
 
-// Cleanup on unmount
 onUnmounted(() => {
   if (isMobile.value) {
     document.removeEventListener("click", handleClickAway);
   }
 });
 
-// Watch for changes in info data and update dimensions
+// Watch for info updates
 watch(
   () => infoStore.info,
-  async (newInfo) => {
+  async () => {
     await nextTick();
     if (infoRef.value) {
-      // Temporarily make the element visible to measure its natural dimensions
       const originalStyle = infoRef.value.style.cssText;
       infoRef.value.style.width = "auto";
       infoRef.value.style.height = "auto";
       infoRef.value.style.visibility = "hidden";
       infoRef.value.style.position = "absolute";
 
-      // Force a reflow to ensure the element is rendered
       infoRef.value.offsetHeight;
 
-      // Now measure the dimensions
       infoHeight.value = infoRef.value.offsetHeight;
       infoWidth.value = infoRef.value.offsetWidth;
 
-      // Restore original styles
       infoRef.value.style.cssText = originalStyle;
-
-      console.log("Updated info dimensions:", {
-        height: infoHeight.value,
-        width: infoWidth.value,
-      });
     }
   },
   { deep: true }
 );
 
-// Computed properties for info data and main style
+// Computed
 const infoData = computed(() => infoStore.info);
 
 const mainStyle = computed(() => {
   if (route.path !== "/") {
-    return {
-      width: "80px",
-      height: "28px",
-    };
+    return { width: "80px", height: "28px" };
   } else if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
       height: `${78 + infoHeight.value}px`,
       width: `${Math.max(128.56, infoWidth.value) + 50}px`,
     };
   } else {
-    return {
-      width: "128.56px",
-      height: "57px",
-    };
+    return { width: "128.56px", height: "57px" };
   }
 });
 
-// Hover event handlers
+// Hover handlers
 const handleMouseEnter = () => {
   if (route.path === "/") {
-    // Reset bounce states
     bounceOpen.value = false;
     bounceClose.value = false;
-
     isHovered.value = true;
 
-    // Trigger bounce after the transition completes (100ms)
     setTimeout(() => {
       bounceOpen.value = true;
-      // Reset bounce after animation completes (300ms)
-      setTimeout(() => {
-        bounceOpen.value = false;
-      }, 300);
+      setTimeout(() => (bounceOpen.value = false), 300);
     }, 100);
   }
 };
 
 const handleMouseLeave = () => {
-  // Reset bounce states
   bounceOpen.value = false;
   bounceClose.value = false;
-
   isHovered.value = false;
 
-  // Trigger bounce after the transition completes (100ms)
   setTimeout(() => {
     bounceClose.value = true;
-    // Reset bounce after animation completes (300ms)
-    setTimeout(() => {
-      bounceClose.value = false;
-    }, 300);
+    setTimeout(() => (bounceClose.value = false), 300);
   }, 100);
 };
 
-// Click-away handler for mobile
+// Click-away
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
@@ -238,23 +199,18 @@ const handleClickAway = (event) => {
   }
 };
 
-// Simple mobile toggle handler
+// Mobile toggle
 const handleMobileToggle = () => {
-  // Only work on mobile devices
   if (!isMobile.value) return;
 
   if (route.path === "/") {
-    // Close other component if it's open
     const projectsElement = document.querySelector(".projects.active");
     if (projectsElement) {
       const projectsComponent = projectsElement.__vueParentComponent;
       if (projectsComponent?.exposed?.handleMobileClose) {
         projectsComponent.exposed.handleMobileClose();
       }
-      // Add delay to prevent link clicks from triggering
-      setTimeout(() => {
-        toggleThisComponent();
-      }, 50);
+      setTimeout(() => toggleThisComponent(), 50);
       return;
     }
 
@@ -265,47 +221,38 @@ const handleMobileToggle = () => {
 const toggleThisComponent = () => {
   if (isMobileOpen.value) {
     isMobileOpen.value = false;
-    // Trigger bounce close
+    contentInteractive.value = false;
     setTimeout(() => {
       bounceClose.value = true;
-      setTimeout(() => {
-        bounceClose.value = false;
-      }, 300);
+      setTimeout(() => (bounceClose.value = false), 300);
     }, 100);
   } else {
     isMobileOpen.value = true;
-    // Trigger bounce open
+    contentInteractive.value = false;
+    setTimeout(() => (contentInteractive.value = true), 300); // enable after bounce
     setTimeout(() => {
       bounceOpen.value = true;
-      setTimeout(() => {
-        bounceOpen.value = false;
-      }, 300);
+      setTimeout(() => (bounceOpen.value = false), 300);
     }, 100);
   }
 };
 
-// Simple close function for external calls
 const handleMobileClose = () => {
   if (!isMobile.value) return;
   isMobileOpen.value = false;
-
-  // Trigger bounce close
+  contentInteractive.value = false;
   setTimeout(() => {
     bounceClose.value = true;
-    setTimeout(() => {
-      bounceClose.value = false;
-    }, 300);
+    setTimeout(() => (bounceClose.value = false), 300);
   }, 100);
 };
 
 const handleClick = (event) => {
-  // Always allow navigation back to home from non-"/" routes (desktop and mobile)
   if (route.path !== "/") {
     router.push("/");
     return;
   }
 
-  // Only handle mobile toggle logic on mobile devices and "/" route
   if (isMobile.value && route.path === "/") {
     event.preventDefault();
     event.stopPropagation();
@@ -328,7 +275,6 @@ defineExpose({ logoRef, handleMobileClose });
     transform: scale(1);
   }
 }
-
 @keyframes bounceClose {
   0% {
     transform: scale(1);
@@ -340,25 +286,12 @@ defineExpose({ logoRef, handleMobileClose });
     transform: scale(1);
   }
 }
-
 .main {
   white-space: nowrap;
 }
-
-.show {
-  opacity: 1;
-  transition: opacity 100ms ease-in;
-}
-
-.hide {
-  opacity: 0;
-  transition: 100ms;
-}
-
 .bounce-open {
   animation: bounceOpen 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 .bounce-close {
   animation: bounceClose 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
