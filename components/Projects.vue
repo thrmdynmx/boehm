@@ -3,8 +3,9 @@
     ref="logoRef"
     class="projects relative text-white z-[1000] w-fit transition-all duration-200 ease-in-out whitespace-nowrap select-none"
     :class="{
-      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
-      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
+      'bounce-open': route.path === '/' && !isMobile && isHovered && bounceOpen,
+      'bounce-close':
+        route.path === '/' && !isMobile && !isHovered && bounceClose,
       active: isMobile && isMobileOpen,
     }"
     :style="mainStyle"
@@ -39,9 +40,13 @@
         class="projects-wrap w-fit overflow-y-hidden transition-all duration-200"
         :style="{
           height:
-            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
+            route.path === '/' && (isHovered || (isMobile && isMobileOpen))
+              ? infoHeight + 'px'
+              : '0px',
           width:
-            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
+            route.path === '/' && (isHovered || (isMobile && isMobileOpen))
+              ? infoWidth + 'px'
+              : '0px',
         }"
       >
         <div
@@ -69,6 +74,7 @@ import Blob from "../components/ui/liquid-glass/Blob.vue";
 const projectsStore = useProjectsStore();
 const projects = computed(() => projectsStore.projects);
 const route = useRoute();
+const router = useRouter();
 
 const logoRef = ref(null);
 const projectsRef = ref(null);
@@ -195,7 +201,10 @@ watch(
 );
 
 const mainStyle = computed(() => {
-  if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
+  if (
+    (isHovered.value && route.path === "/" && !isMobile.value) ||
+    (isMobile.value && isMobileOpen.value && route.path === "/")
+  ) {
     return {
       height: `${57 + infoHeight.value}px`,
       width: `${Math.max(166.73, infoWidth.value)}px`,
@@ -209,8 +218,9 @@ const mainStyle = computed(() => {
   }
 });
 
+// Hover only desktop + "/"
 const handleMouseEnter = () => {
-  if (isMobile.value) return; // disable hover on mobile
+  if (isMobile.value || route.path !== "/") return;
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = true;
@@ -219,9 +229,8 @@ const handleMouseEnter = () => {
     setTimeout(() => (bounceOpen.value = false), 300);
   }, 100);
 };
-
 const handleMouseLeave = () => {
-  if (isMobile.value) return; // disable hover on mobile
+  if (isMobile.value || route.path !== "/") return;
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = false;
@@ -284,7 +293,7 @@ const handleMobileClose = () => {
 };
 
 const handleClick = (event) => {
-  if (!isMobile.value) return; // no clicks on desktop
+  if (!isMobile.value) return; // desktop has no click toggle
 
   if (route.path === "/") {
     if (isMobileOpen.value) {
@@ -293,6 +302,8 @@ const handleClick = (event) => {
     event.preventDefault();
     event.stopPropagation();
     handleMobileToggle();
+  } else {
+    router.push("/"); // mobile, not home → go home
   }
 };
 
@@ -301,6 +312,12 @@ watch(
   (newPath) => {
     if (newPath !== "/" && isMobile.value && isMobileOpen.value) {
       handleMobileClose();
+    }
+
+    // ✅ when going back to home, reset state to closed
+    if (newPath === "/") {
+      isMobileOpen.value = false;
+      isHovered.value = false;
     }
   }
 );
