@@ -41,6 +41,8 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
+          'pointer-events':
+            isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
         }"
       >
         <div
@@ -388,6 +390,7 @@ const handleClick = (event) => {
   if (!isMobile.value) return;
 
   if (route.path === "/") {
+    event.preventDefault();
     event.stopPropagation();
     if (isMobileOpen.value) {
       handleMobileClose();

@@ -31,6 +31,8 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
+          'pointer-events':
+            isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
@@ -292,6 +294,7 @@ const handleClick = (event) => {
 
   // Only handle mobile open/close logic on mobile devices and "/" route
   if (isMobile.value && route.path === "/") {
+    event.preventDefault();
     event.stopPropagation();
     if (isMobileOpen.value) {
       handleMobileClose();
