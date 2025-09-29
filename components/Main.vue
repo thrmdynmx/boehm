@@ -35,11 +35,12 @@
             isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
         }"
       >
-        <div 
-          ref="infoRef" 
+        <div
+          ref="infoRef"
           class="info space-y-1 whitespace-nowrap"
           :style="{
-            'pointer-events': (isHovered || (isMobile && isMobileOpen)) ? 'auto' : 'none',
+            'pointer-events':
+              isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
           }"
         >
           <!-- text here -->
@@ -250,28 +251,36 @@ const handleMobileToggle = () => {
       if (projectsComponent?.exposed?.handleMobileClose) {
         projectsComponent.exposed.handleMobileClose();
       }
+      // Add delay to prevent link clicks from triggering
+      setTimeout(() => {
+        toggleThisComponent();
+      }, 50);
+      return;
     }
 
-    // Toggle this component
-    if (isMobileOpen.value) {
-      isMobileOpen.value = false;
-      // Trigger bounce close
+    toggleThisComponent();
+  }
+};
+
+const toggleThisComponent = () => {
+  if (isMobileOpen.value) {
+    isMobileOpen.value = false;
+    // Trigger bounce close
+    setTimeout(() => {
+      bounceClose.value = true;
       setTimeout(() => {
-        bounceClose.value = true;
-        setTimeout(() => {
-          bounceClose.value = false;
-        }, 300);
-      }, 100);
-    } else {
-      isMobileOpen.value = true;
-      // Trigger bounce open
+        bounceClose.value = false;
+      }, 300);
+    }, 100);
+  } else {
+    isMobileOpen.value = true;
+    // Trigger bounce open
+    setTimeout(() => {
+      bounceOpen.value = true;
       setTimeout(() => {
-        bounceOpen.value = true;
-        setTimeout(() => {
-          bounceOpen.value = false;
-        }, 300);
-      }, 100);
-    }
+        bounceOpen.value = false;
+      }, 300);
+    }, 100);
   }
 };
 
