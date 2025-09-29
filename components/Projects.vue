@@ -10,11 +10,13 @@
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
-    @click="isMobile && handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
-      <div class="header h-[57px] overflow-hidden">
+      <div
+        class="header h-[57px] overflow-hidden"
+        @click="isMobile && handleClick"
+      >
         <div
           class="header-content relative transition-all duration-500"
           :class="

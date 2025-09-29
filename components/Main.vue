@@ -11,7 +11,6 @@
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
-    @click="handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
@@ -21,6 +20,7 @@
           'text-[10px]  px-[12px] py-[7px]': route.path !== '/',
           'px-[25px] py-[18px]': route.path === '/',
         }"
+        @click="handleClick"
       >
         Noah Böhm
       </div>
