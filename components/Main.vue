@@ -16,7 +16,7 @@
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
       <div
-        class="header h-[57px] absolute top-0 left-0 transition-all duration-200 ease-in-out"
+        class="header h-[57px] absolute top-0 left-0 transition-all duration-200 ease-in-out select-none"
         :class="{
           'text-[10px]  px-[12px] py-[7px]': route.path !== '/',
           'px-[25px] py-[18px]': route.path === '/',
@@ -28,13 +28,9 @@
         class="info-wrap w-fit overflow-y-hidden transition-all duration-200 relative top-[57px]"
         :style="{
           height:
-            isHovered || (isMobile && mobileStore.isMainOpen)
-              ? infoHeight + 'px'
-              : '0px',
+            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
-            isHovered || (isMobile && mobileStore.isMainOpen)
-              ? infoWidth + 'px'
-              : '0px',
+            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
@@ -113,6 +109,16 @@ onMounted(async () => {
   }
 });
 
+// Watch for route changes to close mobile state when leaving "/"
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath !== "/" && isMobile.value && isMobileOpen.value) {
+      handleMobileClose();
+    }
+  }
+);
+
 // Cleanup on unmount
 onUnmounted(() => {
   if (isMobile.value) {
@@ -161,7 +167,7 @@ const mainStyle = computed(() => {
       width: "80px",
       height: "28px",
     };
-  } else if (isHovered.value || (isMobile.value && mobileStore.isMainOpen)) {
+  } else if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
       height: `${78 + infoHeight.value}px`,
       width: `${Math.max(128.56, infoWidth.value) + 50}px`,
@@ -215,7 +221,7 @@ const handleMouseLeave = () => {
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
-    mobileStore.isMainOpen &&
+    isMobileOpen.value &&
     logoRef.value &&
     !logoRef.value.contains(event.target)
   ) {
@@ -223,10 +229,32 @@ const handleClickAway = (event) => {
   }
 };
 
+// Function to close other components
+const closeOtherComponents = () => {
+  // Close Projects component if it's open
+  const projectsElement = document.querySelector(".projects.active");
+  if (projectsElement) {
+    const projectsComponent = projectsElement.__vueParentComponent;
+    if (
+      projectsComponent &&
+      projectsComponent.exposed &&
+      projectsComponent.exposed.handleMobileClose
+    ) {
+      projectsComponent.exposed.handleMobileClose();
+    }
+  }
+};
+
 // Mobile-specific handlers
 const handleMobileOpen = () => {
-  if (isMobile.value && route.path === "/") {
-    mobileStore.openMain();
+  // Only work on mobile devices
+  if (!isMobile.value) return;
+
+  if (route.path === "/") {
+    // Close other components first (simultaneously)
+    closeOtherComponents();
+
+    isMobileOpen.value = true;
 
     // Trigger bounce after the transition completes (100ms)
     setTimeout(() => {
@@ -240,26 +268,32 @@ const handleMobileOpen = () => {
 };
 
 const handleMobileClose = () => {
-  if (isMobile.value) {
-    mobileStore.closeMain();
+  // Only work on mobile devices
+  if (!isMobile.value) return;
 
-    // Trigger bounce after the transition completes (100ms)
+  isMobileOpen.value = false;
+
+  // Trigger bounce after the transition completes (100ms)
+  setTimeout(() => {
+    bounceClose.value = true;
+    // Reset bounce after animation completes (300ms)
     setTimeout(() => {
-      bounceClose.value = true;
-      // Reset bounce after animation completes (300ms)
-      setTimeout(() => {
-        bounceClose.value = false;
-      }, 300);
-    }, 100);
-  }
+      bounceClose.value = false;
+    }, 300);
+  }, 100);
 };
 
 const handleClick = (event) => {
+  // Always allow navigation back to home from non-"/" routes (desktop and mobile)
   if (route.path !== "/") {
     router.push("/");
-  } else if (isMobile.value && route.path === "/") {
+    return;
+  }
+
+  // Only handle mobile open/close logic on mobile devices and "/" route
+  if (isMobile.value && route.path === "/") {
     event.stopPropagation();
-    if (mobileStore.isMainOpen) {
+    if (isMobileOpen.value) {
       handleMobileClose();
     } else {
       handleMobileOpen();
@@ -267,7 +301,7 @@ const handleClick = (event) => {
   }
 };
 
-defineExpose({ logoRef });
+defineExpose({ logoRef, handleMobileClose });
 </script>
 
 <style scoped>

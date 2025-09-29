@@ -1,17 +1,16 @@
 <template>
   <div
     ref="logoRef"
-    class="projects relative text-white z-[1000] w-fit transition-all duration-200 ease-in-out whitespace-nowrap"
+    class="projects relative text-white z-[1000] w-fit transition-all duration-200 ease-in-out whitespace-nowrap select-none"
     :class="{
-      'bounce-open':
-        (isHovered || (isMobile && mobileStore.isProjectsOpen)) && bounceOpen,
-      'bounce-close':
-        !isHovered && !(isMobile && mobileStore.isProjectsOpen) && bounceClose,
+      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
+      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
+      active: isMobile && isMobileOpen,
     }"
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
-    @click="handleClick"
+    @click="isMobile && handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
@@ -37,13 +36,9 @@
         class="projects-wrap w-fit overflow-y-hidden transition-all duration-200"
         :style="{
           height:
-            isHovered || (isMobile && mobileStore.isProjectsOpen)
-              ? infoHeight + 'px'
-              : '0px',
+            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
-            isHovered || (isMobile && mobileStore.isProjectsOpen)
-              ? infoWidth + 'px'
-              : '0px',
+            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
         }"
       >
         <div
@@ -67,12 +62,10 @@
 
 <script setup>
 import Blob from "../components/ui/liquid-glass/Blob.vue";
-import { useMobileStore } from "~/stores/mobile";
 
 const testTitle = "testi";
 
 const projectsStore = useProjectsStore();
-const mobileStore = useMobileStore();
 
 const projects = computed(() => projectsStore.projects);
 
@@ -82,6 +75,7 @@ const logoRef = ref(null);
 const projectsRef = ref(null);
 const projectTitleRef = ref(null);
 const isHovered = ref(false);
+const isMobileOpen = ref(false);
 const infoHeight = ref(0);
 const infoWidth = ref(0);
 const projectTitleWidth = ref(0);
@@ -268,7 +262,7 @@ watch(
 
 // Computed properties for main style
 const mainStyle = computed(() => {
-  if (isHovered.value || (isMobile.value && mobileStore.isProjectsOpen)) {
+  if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
       height: `${57 + infoHeight.value}px`,
       width: `${Math.max(166.73, infoWidth.value)}px`,
@@ -325,7 +319,7 @@ const handleMouseLeave = () => {
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
-    mobileStore.isProjectsOpen &&
+    isMobileOpen.value &&
     logoRef.value &&
     !logoRef.value.contains(event.target)
   ) {
@@ -333,10 +327,32 @@ const handleClickAway = (event) => {
   }
 };
 
+// Function to close other components
+const closeOtherComponents = () => {
+  // Close Main component if it's open
+  const mainElement = document.querySelector(".main.active");
+  if (mainElement) {
+    const mainComponent = mainElement.__vueParentComponent;
+    if (
+      mainComponent &&
+      mainComponent.exposed &&
+      mainComponent.exposed.handleMobileClose
+    ) {
+      mainComponent.exposed.handleMobileClose();
+    }
+  }
+};
+
 // Mobile-specific handlers
 const handleMobileOpen = () => {
-  if (isMobile.value && route.path === "/") {
-    mobileStore.openProjects();
+  // Only work on mobile devices
+  if (!isMobile.value) return;
+
+  if (route.path === "/") {
+    // Close other components first (simultaneously)
+    closeOtherComponents();
+
+    isMobileOpen.value = true;
 
     // Trigger bounce after the transition completes (100ms)
     setTimeout(() => {
@@ -350,30 +366,44 @@ const handleMobileOpen = () => {
 };
 
 const handleMobileClose = () => {
-  if (isMobile.value) {
-    mobileStore.closeProjects();
+  // Only work on mobile devices
+  if (!isMobile.value) return;
 
-    // Trigger bounce after the transition completes (100ms)
+  isMobileOpen.value = false;
+
+  // Trigger bounce after the transition completes (100ms)
+  setTimeout(() => {
+    bounceClose.value = true;
+    // Reset bounce after animation completes (300ms)
     setTimeout(() => {
-      bounceClose.value = true;
-      // Reset bounce after animation completes (300ms)
-      setTimeout(() => {
-        bounceClose.value = false;
-      }, 300);
-    }, 100);
-  }
+      bounceClose.value = false;
+    }, 300);
+  }, 100);
 };
 
 const handleClick = (event) => {
-  if (isMobile.value && route.path === "/") {
+  // Only handle mobile clicks if we're on mobile
+  if (!isMobile.value) return;
+
+  if (route.path === "/") {
     event.stopPropagation();
-    if (mobileStore.isProjectsOpen) {
+    if (isMobileOpen.value) {
       handleMobileClose();
     } else {
       handleMobileOpen();
     }
   }
 };
+
+// Watch for route changes to close mobile state when leaving "/"
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath !== "/" && isMobile.value && isMobileOpen.value) {
+      handleMobileClose();
+    }
+  }
+);
 
 // Cleanup timeout on unmount
 onUnmounted(() => {
@@ -386,7 +416,7 @@ onUnmounted(() => {
   }
 });
 
-defineExpose({ logoRef });
+defineExpose({ logoRef, handleMobileClose });
 </script>
 
 <style scoped>

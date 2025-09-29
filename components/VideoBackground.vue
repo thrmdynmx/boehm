@@ -1,5 +1,7 @@
 <template>
-  <div class="w-full h-full object-cover z-[-1] fixed top-0 left-0">
+  <div
+    class="w-full h-full object-cover z-[-1] fixed top-0 left-0 pointer-events-none select-none drag-none"
+  >
     <video
       :src="src"
       ref="videoRef"
