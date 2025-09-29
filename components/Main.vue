@@ -253,9 +253,16 @@ const handleMobileOpen = () => {
   if (!isMobile.value) return;
 
   if (route.path === "/") {
-    // Close other components first (simultaneously)
-    closeOtherComponents();
+    // Check if another component is open
+    const otherComponentOpen = document.querySelector(".projects.active");
 
+    if (otherComponentOpen) {
+      // If another component is open, just close it and don't open this one
+      closeOtherComponents();
+      return;
+    }
+
+    // Only open if no other component is open
     isMobileOpen.value = true;
 
     // Trigger bounce after the transition completes (100ms)
