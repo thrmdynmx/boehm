@@ -31,15 +31,9 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
-          'pointer-events': contentInteractive ? 'auto' : 'none',
         }"
       >
-        <div
-          ref="infoRef"
-          class="info space-y-1 whitespace-nowrap"
-          :style="{ 'pointer-events': contentInteractive ? 'auto' : 'none' }"
-        >
-          <!-- text here -->
+        <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
           <RichText v-if="infoData && infoData.info" :content="infoData.info" />
         </div>
       </div>
@@ -66,11 +60,10 @@ const infoWidth = ref(0);
 const bounceOpen = ref(false);
 const bounceClose = ref(false);
 const isMobile = ref(false);
-const contentInteractive = ref(false); // NEW: control pointer-events
 
 const infoStore = useInfoStore();
 
-// Mobile detection
+// detect mobile
 const detectMobile = () => {
   isMobile.value =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -80,34 +73,26 @@ const detectMobile = () => {
     "ontouchstart" in window;
 };
 
-// Fetch info data on mount
 onMounted(async () => {
   detectMobile();
-
   if (isMobile.value) {
     document.addEventListener("click", handleClickAway);
   }
-
   await infoStore.fetchInfoData();
   await nextTick();
-
   if (infoRef.value) {
     const originalStyle = infoRef.value.style.cssText;
     infoRef.value.style.width = "auto";
     infoRef.value.style.height = "auto";
     infoRef.value.style.visibility = "hidden";
     infoRef.value.style.position = "absolute";
-
     infoRef.value.offsetHeight;
-
     infoHeight.value = infoRef.value.offsetHeight;
     infoWidth.value = infoRef.value.offsetWidth;
-
     infoRef.value.style.cssText = originalStyle;
   }
 });
 
-// Watch for route changes
 watch(
   () => route.path,
   (newPath) => {
@@ -123,7 +108,6 @@ onUnmounted(() => {
   }
 });
 
-// Watch for info updates
 watch(
   () => infoStore.info,
   async () => {
@@ -134,19 +118,15 @@ watch(
       infoRef.value.style.height = "auto";
       infoRef.value.style.visibility = "hidden";
       infoRef.value.style.position = "absolute";
-
       infoRef.value.offsetHeight;
-
       infoHeight.value = infoRef.value.offsetHeight;
       infoWidth.value = infoRef.value.offsetWidth;
-
       infoRef.value.style.cssText = originalStyle;
     }
   },
   { deep: true }
 );
 
-// Computed
 const infoData = computed(() => infoStore.info);
 
 const mainStyle = computed(() => {
@@ -162,32 +142,27 @@ const mainStyle = computed(() => {
   }
 });
 
-// Hover handlers
 const handleMouseEnter = () => {
   if (route.path === "/") {
     bounceOpen.value = false;
     bounceClose.value = false;
     isHovered.value = true;
-
     setTimeout(() => {
       bounceOpen.value = true;
       setTimeout(() => (bounceOpen.value = false), 300);
     }, 100);
   }
 };
-
 const handleMouseLeave = () => {
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = false;
-
   setTimeout(() => {
     bounceClose.value = true;
     setTimeout(() => (bounceClose.value = false), 300);
   }, 100);
 };
 
-// Click-away
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
@@ -199,10 +174,8 @@ const handleClickAway = (event) => {
   }
 };
 
-// Mobile toggle
 const handleMobileToggle = () => {
   if (!isMobile.value) return;
-
   if (route.path === "/") {
     const projectsElement = document.querySelector(".projects.active");
     if (projectsElement) {
@@ -213,7 +186,6 @@ const handleMobileToggle = () => {
       setTimeout(() => toggleThisComponent(), 50);
       return;
     }
-
     toggleThisComponent();
   }
 };
@@ -221,15 +193,12 @@ const handleMobileToggle = () => {
 const toggleThisComponent = () => {
   if (isMobileOpen.value) {
     isMobileOpen.value = false;
-    contentInteractive.value = false;
     setTimeout(() => {
       bounceClose.value = true;
       setTimeout(() => (bounceClose.value = false), 300);
     }, 100);
   } else {
     isMobileOpen.value = true;
-    contentInteractive.value = false;
-    setTimeout(() => (contentInteractive.value = true), 300); // enable after bounce
     setTimeout(() => {
       bounceOpen.value = true;
       setTimeout(() => (bounceOpen.value = false), 300);
@@ -240,7 +209,6 @@ const toggleThisComponent = () => {
 const handleMobileClose = () => {
   if (!isMobile.value) return;
   isMobileOpen.value = false;
-  contentInteractive.value = false;
   setTimeout(() => {
     bounceClose.value = true;
     setTimeout(() => (bounceClose.value = false), 300);
@@ -252,8 +220,10 @@ const handleClick = (event) => {
     router.push("/");
     return;
   }
-
   if (isMobile.value && route.path === "/") {
+    if (isMobileOpen.value) {
+      return; // already open → allow links
+    }
     event.preventDefault();
     event.stopPropagation();
     handleMobileToggle();

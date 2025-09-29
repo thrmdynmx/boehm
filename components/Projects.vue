@@ -41,13 +41,11 @@
             isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
           width:
             isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
-          'pointer-events': contentInteractive ? 'auto' : 'none',
         }"
       >
         <div
           ref="projectsRef"
           class="projects space-y-1 whitespace-nowrap pb-[18px] px-[25px]"
-          :style="{ 'pointer-events': contentInteractive ? 'auto' : 'none' }"
         >
           <NuxtLink
             v-for="(project, index) in projects"
@@ -69,7 +67,6 @@ import Blob from "../components/ui/liquid-glass/Blob.vue";
 
 const projectsStore = useProjectsStore();
 const projects = computed(() => projectsStore.projects);
-
 const route = useRoute();
 
 const logoRef = ref(null);
@@ -87,9 +84,7 @@ const shouldUseDynamicWidth = ref(false);
 const currentProjectTitle = ref("");
 const isLastProject = ref(false);
 const isMobile = ref(false);
-const contentInteractive = ref(false); // NEW
 
-// Detect mobile
 const detectMobile = () => {
   isMobile.value =
     /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -99,7 +94,6 @@ const detectMobile = () => {
     "ontouchstart" in window;
 };
 
-// Project click
 const handleProjectClick = async (projectTitle, projectIndex) => {
   currentProjectTitle.value = projectTitle;
   isLastProject.value = projectIndex === projects.value.length - 1;
@@ -107,7 +101,6 @@ const handleProjectClick = async (projectTitle, projectIndex) => {
   await measureProjectTitleWidth();
 };
 
-// Measure widths
 const measureProjectTitleWidth = async () => {
   await nextTick();
   if (projectTitleRef.value) {
@@ -136,7 +129,6 @@ const measureProjectsDimensions = async () => {
   }
 };
 
-// Watch projects
 watch(
   () => projectsStore.isLoaded,
   async (isLoaded) => {
@@ -158,7 +150,6 @@ const setProjectTitleFromSlug = (slug) => {
   }
 };
 
-// Mount
 onMounted(async () => {
   detectMobile();
   if (isMobile.value) {
@@ -176,7 +167,6 @@ onMounted(async () => {
 
 const isNotIndexPage = computed(() => route.path !== "/");
 
-// Watch routes
 watch(
   () => route.path,
   async (newPath, oldPath) => {
@@ -203,7 +193,6 @@ watch(
   }
 );
 
-// Computed style
 const mainStyle = computed(() => {
   if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
@@ -219,7 +208,6 @@ const mainStyle = computed(() => {
   }
 });
 
-// Hover
 const handleMouseEnter = () => {
   bounceOpen.value = false;
   bounceClose.value = false;
@@ -239,7 +227,6 @@ const handleMouseLeave = () => {
   }, 100);
 };
 
-// Click-away
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
@@ -251,7 +238,6 @@ const handleClickAway = (event) => {
   }
 };
 
-// Mobile toggle
 const handleMobileToggle = () => {
   if (!isMobile.value) return;
   if (route.path === "/") {
@@ -271,15 +257,12 @@ const handleMobileToggle = () => {
 const toggleThisComponent = () => {
   if (isMobileOpen.value) {
     isMobileOpen.value = false;
-    contentInteractive.value = false;
     setTimeout(() => {
       bounceClose.value = true;
       setTimeout(() => (bounceClose.value = false), 300);
     }, 100);
   } else {
     isMobileOpen.value = true;
-    contentInteractive.value = false;
-    setTimeout(() => (contentInteractive.value = true), 300); // enable after bounce
     setTimeout(() => {
       bounceOpen.value = true;
       setTimeout(() => (bounceOpen.value = false), 300);
@@ -290,7 +273,6 @@ const toggleThisComponent = () => {
 const handleMobileClose = () => {
   if (!isMobile.value) return;
   isMobileOpen.value = false;
-  contentInteractive.value = false;
   setTimeout(() => {
     bounceClose.value = true;
     setTimeout(() => (bounceClose.value = false), 300);
@@ -300,13 +282,15 @@ const handleMobileClose = () => {
 const handleClick = (event) => {
   if (!isMobile.value) return;
   if (route.path === "/") {
+    if (isMobileOpen.value) {
+      return; // already open → allow links
+    }
     event.preventDefault();
     event.stopPropagation();
     handleMobileToggle();
   }
 };
 
-// Close on route change
 watch(
   () => route.path,
   (newPath) => {
@@ -316,7 +300,6 @@ watch(
   }
 );
 
-// Cleanup
 onUnmounted(() => {
   if (widthTransitionTimeout.value) clearTimeout(widthTransitionTimeout.value);
   if (isMobile.value) {
