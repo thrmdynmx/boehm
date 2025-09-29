@@ -87,7 +87,7 @@ const bounceOpen = ref(false);
 const bounceClose = ref(false);
 const widthTransitionTimeout = ref(null);
 const shouldUseDynamicWidth = ref(false);
-const currentProjectTitle = ref("Test Title Test Title Test Title");
+const currentProjectTitle = ref("");
 const isLastProject = ref(false);
 const isMobile = ref(false);
 

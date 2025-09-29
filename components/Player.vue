@@ -515,7 +515,7 @@ onUnmounted(() => {
 
 <style>
 .player-container-wrapper {
-  height: calc(60dvh + 42px);
+  height: 60dvh;
   transition: opacity 0.2s ease-in-out;
   border-radius: 10px;
   position: absolute;
@@ -546,6 +546,7 @@ onUnmounted(() => {
   max-width: unset;
   width: auto;
   border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .player-container {
