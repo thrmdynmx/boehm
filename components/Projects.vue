@@ -48,6 +48,10 @@
         <div
           ref="projectsRef"
           class="projects space-y-1 whitespace-nowrap pb-[18px] px-[25px]"
+          :style="{
+            'pointer-events':
+              isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
+          }"
         >
           <NuxtLink
             v-for="(project, index) in projects"

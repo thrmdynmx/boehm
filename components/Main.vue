@@ -35,7 +35,13 @@
             isHovered || (isMobile && isMobileOpen) ? 'auto' : 'none',
         }"
       >
-        <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
+        <div 
+          ref="infoRef" 
+          class="info space-y-1 whitespace-nowrap"
+          :style="{
+            'pointer-events': (isHovered || (isMobile && isMobileOpen)) ? 'auto' : 'none',
+          }"
+        >
           <!-- text here -->
           <RichText v-if="infoData && infoData.info" :content="infoData.info" />
         </div>
