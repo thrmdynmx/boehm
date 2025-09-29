@@ -269,6 +269,20 @@ const handleMobileToggle = () => {
   }
 };
 
+// Simple close function for external calls
+const handleMobileClose = () => {
+  if (!isMobile.value) return;
+  isMobileOpen.value = false;
+
+  // Trigger bounce close
+  setTimeout(() => {
+    bounceClose.value = true;
+    setTimeout(() => {
+      bounceClose.value = false;
+    }, 300);
+  }, 100);
+};
+
 const handleClick = (event) => {
   // Always allow navigation back to home from non-"/" routes (desktop and mobile)
   if (route.path !== "/") {
