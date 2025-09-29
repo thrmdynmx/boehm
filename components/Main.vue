@@ -3,12 +3,10 @@
     ref="logoRef"
     class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      'bounce-open':
-        (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
-      'bounce-close':
-        !isHovered && !(isMobile && isMobileOpen) && bounceClose,
+      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
+      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
-      'active': isMobile && isMobileOpen,
+      active: isMobile && isMobileOpen,
     }"
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
