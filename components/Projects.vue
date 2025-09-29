@@ -3,12 +3,13 @@
     ref="logoRef"
     class="projects relative text-white z-[1000] w-fit transition-all duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      'bounce-open': isHovered && bounceOpen,
-      'bounce-close': !isHovered && bounceClose,
+      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
+      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
     }"
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    @click="handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
@@ -33,8 +34,10 @@
       <div
         class="projects-wrap w-fit overflow-y-hidden transition-all duration-200"
         :style="{
-          height: isHovered ? infoHeight + 'px' : '0px',
-          width: isHovered ? infoWidth + 'px' : '0px',
+          height:
+            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
+          width:
+            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
         }"
       >
         <div
@@ -71,6 +74,7 @@ const logoRef = ref(null);
 const projectsRef = ref(null);
 const projectTitleRef = ref(null);
 const isHovered = ref(false);
+const isMobileOpen = ref(false);
 const infoHeight = ref(0);
 const infoWidth = ref(0);
 const projectTitleWidth = ref(0);
@@ -80,6 +84,17 @@ const widthTransitionTimeout = ref(null);
 const shouldUseDynamicWidth = ref(false);
 const currentProjectTitle = ref("Test Title Test Title Test Title");
 const isLastProject = ref(false);
+const isMobile = ref(false);
+
+// Mobile detection
+const detectMobile = () => {
+  isMobile.value =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) ||
+    window.innerWidth <= 768 ||
+    "ontouchstart" in window;
+};
 
 // Function to handle project click
 const handleProjectClick = async (projectTitle, projectIndex) => {
@@ -172,6 +187,13 @@ const setProjectTitleFromSlug = (slug) => {
 
 // Fetch projects data on mount
 onMounted(async () => {
+  detectMobile();
+
+  // Add click-away listener for mobile
+  if (isMobile.value) {
+    document.addEventListener("click", handleClickAway);
+  }
+
   // Fetch projects data first
   await projectsStore.fetchProjectsData();
 
@@ -239,7 +261,7 @@ watch(
 
 // Computed properties for main style
 const mainStyle = computed(() => {
-  if (isHovered.value) {
+  if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
       height: `${57 + infoHeight.value}px`,
       width: `${Math.max(166.73, infoWidth.value)}px`,
@@ -292,10 +314,68 @@ const handleMouseLeave = () => {
   }, 100);
 };
 
+// Click-away handler for mobile
+const handleClickAway = (event) => {
+  if (
+    isMobile.value &&
+    isMobileOpen.value &&
+    logoRef.value &&
+    !logoRef.value.contains(event.target)
+  ) {
+    handleMobileClose();
+  }
+};
+
+// Mobile-specific handlers
+const handleMobileOpen = () => {
+  if (isMobile.value && route.path === "/") {
+    isMobileOpen.value = true;
+
+    // Trigger bounce after the transition completes (100ms)
+    setTimeout(() => {
+      bounceOpen.value = true;
+      // Reset bounce after animation completes (300ms)
+      setTimeout(() => {
+        bounceOpen.value = false;
+      }, 300);
+    }, 100);
+  }
+};
+
+const handleMobileClose = () => {
+  if (isMobile.value) {
+    isMobileOpen.value = false;
+
+    // Trigger bounce after the transition completes (100ms)
+    setTimeout(() => {
+      bounceClose.value = true;
+      // Reset bounce after animation completes (300ms)
+      setTimeout(() => {
+        bounceClose.value = false;
+      }, 300);
+    }, 100);
+  }
+};
+
+const handleClick = (event) => {
+  if (isMobile.value && route.path === "/") {
+    event.stopPropagation();
+    if (isMobileOpen.value) {
+      handleMobileClose();
+    } else {
+      handleMobileOpen();
+    }
+  }
+};
+
 // Cleanup timeout on unmount
 onUnmounted(() => {
   if (widthTransitionTimeout.value) {
     clearTimeout(widthTransitionTimeout.value);
+  }
+
+  if (isMobile.value) {
+    document.removeEventListener("click", handleClickAway);
   }
 });
 

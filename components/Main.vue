@@ -3,8 +3,8 @@
     ref="logoRef"
     class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      'bounce-open': isHovered && bounceOpen,
-      'bounce-close': !isHovered && bounceClose,
+      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
+      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
     }"
     :style="mainStyle"
@@ -26,8 +26,10 @@
       <div
         class="info-wrap w-fit overflow-y-hidden transition-all duration-200 relative top-[57px]"
         :style="{
-          height: isHovered ? infoHeight + 'px' : '0px',
-          width: isHovered ? infoWidth + 'px' : '0px',
+          height:
+            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
+          width:
+            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
@@ -43,7 +45,7 @@
 import Blob from "../components/ui/liquid-glass/Blob.vue";
 import RichText from "./RichText.vue";
 import { useRoute, useRouter } from "vue-router";
-import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useInfoStore } from "~/stores/info";
 
 const route = useRoute();
@@ -52,15 +54,34 @@ const router = useRouter();
 const logoRef = ref(null);
 const infoRef = ref(null);
 const isHovered = ref(false);
+const isMobileOpen = ref(false);
 const infoHeight = ref(0);
 const infoWidth = ref(0);
 const bounceOpen = ref(false);
 const bounceClose = ref(false);
+const isMobile = ref(false);
 
 const infoStore = useInfoStore();
 
+// Mobile detection
+const detectMobile = () => {
+  isMobile.value =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    ) ||
+    window.innerWidth <= 768 ||
+    "ontouchstart" in window;
+};
+
 // Fetch info data on mount
 onMounted(async () => {
+  detectMobile();
+
+  // Add click-away listener for mobile
+  if (isMobile.value) {
+    document.addEventListener("click", handleClickAway);
+  }
+
   await infoStore.fetchInfoData();
 
   // Wait for next tick to ensure DOM is updated
@@ -84,6 +105,13 @@ onMounted(async () => {
 
     // Restore original styles
     infoRef.value.style.cssText = originalStyle;
+  }
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (isMobile.value) {
+    document.removeEventListener("click", handleClickAway);
   }
 });
 
@@ -128,7 +156,7 @@ const mainStyle = computed(() => {
       width: "80px",
       height: "28px",
     };
-  } else if (isHovered.value) {
+  } else if (isHovered.value || (isMobile.value && isMobileOpen.value)) {
     return {
       height: `${78 + infoHeight.value}px`,
       width: `${Math.max(128.56, infoWidth.value) + 50}px`,
@@ -178,9 +206,59 @@ const handleMouseLeave = () => {
   }, 100);
 };
 
-const handleClick = () => {
+// Click-away handler for mobile
+const handleClickAway = (event) => {
+  if (
+    isMobile.value &&
+    isMobileOpen.value &&
+    logoRef.value &&
+    !logoRef.value.contains(event.target)
+  ) {
+    handleMobileClose();
+  }
+};
+
+// Mobile-specific handlers
+const handleMobileOpen = () => {
+  if (isMobile.value && route.path === "/") {
+    isMobileOpen.value = true;
+
+    // Trigger bounce after the transition completes (100ms)
+    setTimeout(() => {
+      bounceOpen.value = true;
+      // Reset bounce after animation completes (300ms)
+      setTimeout(() => {
+        bounceOpen.value = false;
+      }, 300);
+    }, 100);
+  }
+};
+
+const handleMobileClose = () => {
+  if (isMobile.value) {
+    isMobileOpen.value = false;
+
+    // Trigger bounce after the transition completes (100ms)
+    setTimeout(() => {
+      bounceClose.value = true;
+      // Reset bounce after animation completes (300ms)
+      setTimeout(() => {
+        bounceClose.value = false;
+      }, 300);
+    }, 100);
+  }
+};
+
+const handleClick = (event) => {
   if (route.path !== "/") {
     router.push("/");
+  } else if (isMobile.value && route.path === "/") {
+    event.stopPropagation();
+    if (isMobileOpen.value) {
+      handleMobileClose();
+    } else {
+      handleMobileOpen();
+    }
   }
 };
 
