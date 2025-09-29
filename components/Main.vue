@@ -231,65 +231,42 @@ const handleClickAway = (event) => {
   }
 };
 
-// Function to close other components
-const closeOtherComponents = () => {
-  // Close Projects component if it's open
-  const projectsElement = document.querySelector(".projects.active");
-  if (projectsElement) {
-    const projectsComponent = projectsElement.__vueParentComponent;
-    if (
-      projectsComponent &&
-      projectsComponent.exposed &&
-      projectsComponent.exposed.handleMobileClose
-    ) {
-      projectsComponent.exposed.handleMobileClose();
-    }
-  }
-};
-
-// Mobile-specific handlers
-const handleMobileOpen = () => {
+// Simple mobile toggle handler
+const handleMobileToggle = () => {
   // Only work on mobile devices
   if (!isMobile.value) return;
 
   if (route.path === "/") {
-    // Check if another component is open
-    const otherComponentOpen = document.querySelector(".projects.active");
-
-    if (otherComponentOpen) {
-      // If another component is open, just close it and don't open this one
-      closeOtherComponents();
-      return;
+    // Close other component if it's open
+    const projectsElement = document.querySelector(".projects.active");
+    if (projectsElement) {
+      const projectsComponent = projectsElement.__vueParentComponent;
+      if (projectsComponent?.exposed?.handleMobileClose) {
+        projectsComponent.exposed.handleMobileClose();
+      }
     }
 
-    // Only open if no other component is open
-    isMobileOpen.value = true;
-
-    // Trigger bounce after the transition completes (100ms)
-    setTimeout(() => {
-      bounceOpen.value = true;
-      // Reset bounce after animation completes (300ms)
+    // Toggle this component
+    if (isMobileOpen.value) {
+      isMobileOpen.value = false;
+      // Trigger bounce close
       setTimeout(() => {
-        bounceOpen.value = false;
-      }, 300);
-    }, 100);
+        bounceClose.value = true;
+        setTimeout(() => {
+          bounceClose.value = false;
+        }, 300);
+      }, 100);
+    } else {
+      isMobileOpen.value = true;
+      // Trigger bounce open
+      setTimeout(() => {
+        bounceOpen.value = true;
+        setTimeout(() => {
+          bounceOpen.value = false;
+        }, 300);
+      }, 100);
+    }
   }
-};
-
-const handleMobileClose = () => {
-  // Only work on mobile devices
-  if (!isMobile.value) return;
-
-  isMobileOpen.value = false;
-
-  // Trigger bounce after the transition completes (100ms)
-  setTimeout(() => {
-    bounceClose.value = true;
-    // Reset bounce after animation completes (300ms)
-    setTimeout(() => {
-      bounceClose.value = false;
-    }, 300);
-  }, 100);
 };
 
 const handleClick = (event) => {
@@ -299,15 +276,11 @@ const handleClick = (event) => {
     return;
   }
 
-  // Only handle mobile open/close logic on mobile devices and "/" route
+  // Only handle mobile toggle logic on mobile devices and "/" route
   if (isMobile.value && route.path === "/") {
     event.preventDefault();
     event.stopPropagation();
-    if (isMobileOpen.value) {
-      handleMobileClose();
-    } else {
-      handleMobileOpen();
-    }
+    handleMobileToggle();
   }
 };
 
