@@ -10,6 +10,7 @@
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    @click="isMobile && handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
@@ -209,6 +210,7 @@ const mainStyle = computed(() => {
 });
 
 const handleMouseEnter = () => {
+  if (isMobile.value) return; // disable hover on mobile
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = true;
@@ -217,7 +219,9 @@ const handleMouseEnter = () => {
     setTimeout(() => (bounceOpen.value = false), 300);
   }, 100);
 };
+
 const handleMouseLeave = () => {
+  if (isMobile.value) return; // disable hover on mobile
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = false;
@@ -280,10 +284,11 @@ const handleMobileClose = () => {
 };
 
 const handleClick = (event) => {
-  if (!isMobile.value) return;
+  if (!isMobile.value) return; // no clicks on desktop
+
   if (route.path === "/") {
     if (isMobileOpen.value) {
-      return; // already open → allow links
+      return; // already open → let links work
     }
     event.preventDefault();
     event.stopPropagation();

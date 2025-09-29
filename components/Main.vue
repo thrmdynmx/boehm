@@ -3,14 +3,16 @@
     ref="logoRef"
     class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
-      'bounce-open': (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
-      'bounce-close': !isHovered && !(isMobile && isMobileOpen) && bounceClose,
+      'bounce-open': route.path === '/' && !isMobile && isHovered && bounceOpen,
+      'bounce-close':
+        route.path === '/' && !isMobile && !isHovered && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
       active: isMobile && isMobileOpen,
     }"
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
     @mouseleave="handleMouseLeave"
+    @click="isMobile && handleClick"
   >
     <div>
       <Blob class="absolute top-0 left-0 z-[-1]" />
@@ -28,9 +30,13 @@
         class="info-wrap w-fit overflow-y-hidden transition-all duration-200 relative top-[57px]"
         :style="{
           height:
-            isHovered || (isMobile && isMobileOpen) ? infoHeight + 'px' : '0px',
+            route.path === '/' && (isHovered || (isMobile && isMobileOpen))
+              ? infoHeight + 'px'
+              : '0px',
           width:
-            isHovered || (isMobile && isMobileOpen) ? infoWidth + 'px' : '0px',
+            route.path === '/' && (isHovered || (isMobile && isMobileOpen))
+              ? infoWidth + 'px'
+              : '0px',
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
@@ -142,18 +148,20 @@ const mainStyle = computed(() => {
   }
 });
 
+// Hover handlers only for desktop and only on "/"
 const handleMouseEnter = () => {
-  if (route.path === "/") {
-    bounceOpen.value = false;
-    bounceClose.value = false;
-    isHovered.value = true;
-    setTimeout(() => {
-      bounceOpen.value = true;
-      setTimeout(() => (bounceOpen.value = false), 300);
-    }, 100);
-  }
+  if (isMobile.value || route.path !== "/") return;
+  bounceOpen.value = false;
+  bounceClose.value = false;
+  isHovered.value = true;
+  setTimeout(() => {
+    bounceOpen.value = true;
+    setTimeout(() => (bounceOpen.value = false), 300);
+  }, 100);
 };
+
 const handleMouseLeave = () => {
+  if (isMobile.value || route.path !== "/") return;
   bounceOpen.value = false;
   bounceClose.value = false;
   isHovered.value = false;
@@ -163,6 +171,7 @@ const handleMouseLeave = () => {
   }, 100);
 };
 
+// Click-away close for mobile
 const handleClickAway = (event) => {
   if (
     isMobile.value &&
@@ -174,6 +183,7 @@ const handleClickAway = (event) => {
   }
 };
 
+// Mobile toggle
 const handleMobileToggle = () => {
   if (!isMobile.value) return;
   if (route.path === "/") {
@@ -215,18 +225,23 @@ const handleMobileClose = () => {
   }, 100);
 };
 
+// Click behavior
 const handleClick = (event) => {
-  if (route.path !== "/") {
-    router.push("/");
-    return;
-  }
-  if (isMobile.value && route.path === "/") {
-    if (isMobileOpen.value) {
-      return; // already open → allow links
+  if (isMobile.value) {
+    if (route.path === "/") {
+      if (isMobileOpen.value) {
+        return; // already open → let links work
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      handleMobileToggle();
+    } else {
+      router.push("/"); // mobile: navigate home from non-home
     }
-    event.preventDefault();
-    event.stopPropagation();
-    handleMobileToggle();
+  } else {
+    if (route.path !== "/") {
+      router.push("/"); // desktop: click always navigates home if not already
+    }
   }
 };
 
