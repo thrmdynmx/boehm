@@ -20,6 +20,7 @@
     "@sanity/block-content-to-html": "^2.0.0",
     "@sanity/client": "^7.11.2",
     "clsx": "^2.1.1",
+    "html-entities": "^2.6.0",
     "maath": "^0.10.8",
     "nuxt": "^4.0.3",
     "pinia": "^3.0.3",

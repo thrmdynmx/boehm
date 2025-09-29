@@ -31,19 +31,8 @@
         }"
       >
         <div ref="infoRef" class="info space-y-1 whitespace-nowrap">
-          <div
-            v-if="infoData && infoData.info"
-            v-for="block in infoData.info"
-            :key="block._key || Math.random()"
-          >
-            <div
-              v-if="block.children"
-              v-for="child in block.children"
-              :key="child._key || Math.random()"
-            >
-              {{ child.text }}
-            </div>
-          </div>
+          <!-- text here -->
+          <RichText v-if="infoData && infoData.info" :content="infoData.info" />
         </div>
       </div>
     </div>
@@ -52,7 +41,10 @@
 
 <script setup>
 import Blob from "../components/ui/liquid-glass/Blob.vue";
+import RichText from "./RichText.vue";
 import { useRoute, useRouter } from "vue-router";
+import { ref, computed, onMounted, nextTick, watch } from "vue";
+import { useInfoStore } from "~/stores/info";
 
 const route = useRoute();
 const router = useRouter();
@@ -218,6 +210,10 @@ defineExpose({ logoRef });
   100% {
     transform: scale(1);
   }
+}
+
+.main {
+  white-space: nowrap;
 }
 
 .show {
