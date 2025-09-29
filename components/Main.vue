@@ -4,10 +4,11 @@
     class="main relative text-white z-[1000] w-fit transition-all px-[25px] duration-200 ease-in-out whitespace-nowrap"
     :class="{
       'bounce-open':
-        (isHovered || (isMobile && mobileStore.isMainOpen)) && bounceOpen,
+        (isHovered || (isMobile && isMobileOpen)) && bounceOpen,
       'bounce-close':
-        !isHovered && !(isMobile && mobileStore.isMainOpen) && bounceClose,
+        !isHovered && !(isMobile && isMobileOpen) && bounceClose,
       'px-[0px] py-[0px] cursor-pointer': route.path !== '/',
+      'active': isMobile && isMobileOpen,
     }"
     :style="mainStyle"
     @mouseenter="handleMouseEnter"
@@ -53,7 +54,6 @@ import RichText from "./RichText.vue";
 import { useRoute, useRouter } from "vue-router";
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useInfoStore } from "~/stores/info";
-import { useMobileStore } from "~/stores/mobile";
 
 const route = useRoute();
 const router = useRouter();
@@ -61,6 +61,7 @@ const router = useRouter();
 const logoRef = ref(null);
 const infoRef = ref(null);
 const isHovered = ref(false);
+const isMobileOpen = ref(false);
 const infoHeight = ref(0);
 const infoWidth = ref(0);
 const bounceOpen = ref(false);
@@ -68,7 +69,6 @@ const bounceClose = ref(false);
 const isMobile = ref(false);
 
 const infoStore = useInfoStore();
-const mobileStore = useMobileStore();
 
 // Mobile detection
 const detectMobile = () => {
