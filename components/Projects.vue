@@ -88,6 +88,7 @@ const shouldUseDynamicWidth = ref(false);
 const currentProjectTitle = ref("");
 const isLastProject = ref(false);
 const isMobile = ref(false);
+const activeMobileBubble = useState("activeMobileBubble", () => null);
 
 const detectMobile = () => {
   isMobile.value =
@@ -248,45 +249,40 @@ const handleClickAway = (event) => {
   }
 };
 
-const handleMobileToggle = () => {
-  if (!isMobile.value) return;
-  if (route.path === "/") {
-    const mainElement = document.querySelector(".main.active");
-    if (mainElement) {
-      const mainComponent = mainElement.__vueParentComponent;
-      if (mainComponent?.exposed?.handleMobileClose) {
-        mainComponent.exposed.handleMobileClose();
-      }
-      setTimeout(() => toggleThisComponent(), 50);
-      return;
-    }
-    toggleThisComponent();
-  }
+const openComponent = () => {
+  if (isMobileOpen.value) return;
+  isMobileOpen.value = true;
+  setTimeout(() => {
+    bounceOpen.value = true;
+    setTimeout(() => (bounceOpen.value = false), 300);
+  }, 100);
 };
 
-const toggleThisComponent = () => {
+const closeComponent = (skipStateUpdate = false) => {
+  if (!isMobileOpen.value) return;
+  isMobileOpen.value = false;
+  if (!skipStateUpdate && activeMobileBubble.value === "projects") {
+    activeMobileBubble.value = null;
+  }
+  setTimeout(() => {
+    bounceClose.value = true;
+    setTimeout(() => (bounceClose.value = false), 300);
+  }, 100);
+};
+
+const handleMobileToggle = () => {
+  if (!isMobile.value || route.path !== "/") return;
   if (isMobileOpen.value) {
-    isMobileOpen.value = false;
-    setTimeout(() => {
-      bounceClose.value = true;
-      setTimeout(() => (bounceClose.value = false), 300);
-    }, 100);
+    closeComponent();
   } else {
-    isMobileOpen.value = true;
-    setTimeout(() => {
-      bounceOpen.value = true;
-      setTimeout(() => (bounceOpen.value = false), 300);
-    }, 100);
+    activeMobileBubble.value = "projects";
+    openComponent();
   }
 };
 
 const handleMobileClose = () => {
   if (!isMobile.value) return;
-  isMobileOpen.value = false;
-  setTimeout(() => {
-    bounceClose.value = true;
-    setTimeout(() => (bounceClose.value = false), 300);
-  }, 100);
+  closeComponent();
 };
 
 const handleClick = (event) => {
@@ -308,16 +304,25 @@ watch(
   () => route.path,
   (newPath) => {
     if (newPath !== "/" && isMobile.value && isMobileOpen.value) {
-      handleMobileClose();
+      closeComponent();
     }
 
     // ✅ when going back to home, reset state to closed
     if (newPath === "/") {
-      isMobileOpen.value = false;
+      if (isMobile.value && isMobileOpen.value) {
+        closeComponent();
+      }
       isHovered.value = false;
     }
   }
 );
+
+watch(activeMobileBubble, (value) => {
+  if (!isMobile.value) return;
+  if (value !== "projects" && isMobileOpen.value) {
+    closeComponent(true);
+  }
+});
 
 onUnmounted(() => {
   if (widthTransitionTimeout.value) clearTimeout(widthTransitionTimeout.value);

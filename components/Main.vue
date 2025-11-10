@@ -66,6 +66,7 @@ const infoWidth = ref(0);
 const bounceOpen = ref(false);
 const bounceClose = ref(false);
 const isMobile = ref(false);
+const activeMobileBubble = useState("activeMobileBubble", () => null);
 
 const infoStore = useInfoStore();
 
@@ -103,10 +104,17 @@ watch(
   () => route.path,
   (newPath) => {
     if (newPath !== "/" && isMobile.value && isMobileOpen.value) {
-      handleMobileClose();
+      closeComponent();
     }
   }
 );
+
+watch(activeMobileBubble, (value) => {
+  if (!isMobile.value) return;
+  if (value !== "main" && isMobileOpen.value) {
+    closeComponent(true);
+  }
+});
 
 onUnmounted(() => {
   if (isMobile.value) {
@@ -183,46 +191,41 @@ const handleClickAway = (event) => {
   }
 };
 
-// Mobile toggle
-const handleMobileToggle = () => {
-  if (!isMobile.value) return;
-  if (route.path === "/") {
-    const projectsElement = document.querySelector(".projects.active");
-    if (projectsElement) {
-      const projectsComponent = projectsElement.__vueParentComponent;
-      if (projectsComponent?.exposed?.handleMobileClose) {
-        projectsComponent.exposed.handleMobileClose();
-      }
-      setTimeout(() => toggleThisComponent(), 50);
-      return;
-    }
-    toggleThisComponent();
-  }
+const openComponent = () => {
+  if (isMobileOpen.value) return;
+  isMobileOpen.value = true;
+  setTimeout(() => {
+    bounceOpen.value = true;
+    setTimeout(() => (bounceOpen.value = false), 300);
+  }, 100);
 };
 
-const toggleThisComponent = () => {
+const closeComponent = (skipStateUpdate = false) => {
+  if (!isMobileOpen.value) return;
+  isMobileOpen.value = false;
+  if (!skipStateUpdate && activeMobileBubble.value === "main") {
+    activeMobileBubble.value = null;
+  }
+  setTimeout(() => {
+    bounceClose.value = true;
+    setTimeout(() => (bounceClose.value = false), 300);
+  }, 100);
+};
+
+// Mobile toggle
+const handleMobileToggle = () => {
+  if (!isMobile.value || route.path !== "/") return;
   if (isMobileOpen.value) {
-    isMobileOpen.value = false;
-    setTimeout(() => {
-      bounceClose.value = true;
-      setTimeout(() => (bounceClose.value = false), 300);
-    }, 100);
+    closeComponent();
   } else {
-    isMobileOpen.value = true;
-    setTimeout(() => {
-      bounceOpen.value = true;
-      setTimeout(() => (bounceOpen.value = false), 300);
-    }, 100);
+    activeMobileBubble.value = "main";
+    openComponent();
   }
 };
 
 const handleMobileClose = () => {
   if (!isMobile.value) return;
-  isMobileOpen.value = false;
-  setTimeout(() => {
-    bounceClose.value = true;
-    setTimeout(() => (bounceClose.value = false), 300);
-  }, 100);
+  closeComponent();
 };
 
 // Click behavior
