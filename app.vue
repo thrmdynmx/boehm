@@ -39,7 +39,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
-  background: black;
+  background: rgb(0, 0, 0);
   color: white;
 }
 

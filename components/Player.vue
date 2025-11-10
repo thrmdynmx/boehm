@@ -1,101 +1,100 @@
 <template>
-  <div
-    class="player-container-wrapper mb-[30px]"
-    :class="{ 'opacity-0': !isVideoReady }"
-  >
-    <div
-      class="player-container relative select-none absolute left-1/2 -translate-x-1/2"
-      :class="{
-        fullscreen: isFullscreen,
-        'cursor-hidden': isFullscreen && !showControls,
-      }"
-      ref="playerContainer"
-    >
-      <!-- Preload icons -->
-      <div class="hidden">
-        <Icon name="carbon:play-filled-alt" />
-        <Icon name="carbon:pause-filled" />
-        <Icon name="carbon:maximize" />
-        <Icon name="carbon:minimize" />
-        <Icon name="carbon:close-large" />
-      </div>
-      <video
-        :src="vimeoUrl + '#t=0.01'"
-        class="project-video w-full cursor-pointer"
-        :class="{ fullscreen: isFullscreen }"
-        playsinline
-        ref="videoRef"
-        @click="handleClick"
-        @timeupdate="updateProgress"
-        @mousemove="handleMouseMove"
-        @ended="handleVideoEnd"
-      >
-        Your browser does not support video.
-      </video>
-      <div class="loading-message" :class="{ 'opacity-0': !isLoading }">
-        <Loader />
-      </div>
+  <Transition name="player-fade">
+    <div v-show="isVideoReady" class="player-container-wrapper mb-[30px]">
       <div
-        v-if="isFullscreen && isMobile"
-        class="fullscreen-placeholder w-[100dvw] aspect-[16/9]"
-      ></div>
-
-      <div
-        class="custom-controls pointer-events-auto"
-        :class="{ 'opacity-0': !isVideoReady }"
-        @mouseover="handleMouseMove"
-        @mouseleave="handleMouseLeave"
-        ref="controlsRef"
+        class="player-container relative select-none absolute left-1/2 -translate-x-1/2"
+        :class="{
+          fullscreen: isFullscreen,
+          'cursor-hidden': isFullscreen && !showControls,
+        }"
+        ref="playerContainer"
       >
-        <BlobPlayer
-          class="absolute top-0 left-0 z-[-1]"
-          :opacity="showControls ? 1 : 0"
-        />
-        <div
-          class="container-container"
-          :style="{ opacity: showControls ? 1 : 0 }"
+        <!-- Preload icons -->
+        <div class="hidden">
+          <Icon name="carbon:play-filled-alt" />
+          <Icon name="carbon:pause-filled" />
+          <Icon name="carbon:maximize" />
+          <Icon name="carbon:minimize" />
+          <Icon name="carbon:close-large" />
+        </div>
+        <video
+          :src="vimeoUrl + '#t=0.01'"
+          class="project-video w-full cursor-pointer"
+          :class="{ fullscreen: isFullscreen }"
+          playsinline
+          ref="videoRef"
+          @click="handleClick"
+          @timeupdate="updateProgress"
+          @mousemove="handleMouseMove"
+          @ended="handleVideoEnd"
         >
-          <button @click="togglePlay" class="h-[15px] w-[15px]">
-            <Icon
-              :class="{ hidden: isPlaying }"
-              name="carbon:play-filled-alt"
-              class="w-full h-full block"
-            />
-            <Icon
-              :class="{ hidden: !isPlaying }"
-              name="carbon:pause-filled"
-              class="w-full h-full block"
-            />
-          </button>
+          Your browser does not support video.
+        </video>
+        <div class="loading-message" :class="{ 'opacity-0': !isLoading }">
+          <Loader />
+        </div>
+        <div
+          v-if="isFullscreen && isMobile"
+          class="fullscreen-placeholder w-[100dvw] aspect-[16/9]"
+        ></div>
+
+        <div
+          class="custom-controls pointer-events-auto"
+          :class="{ 'opacity-0': !isVideoReady }"
+          @mouseover="handleMouseMove"
+          @mouseleave="handleMouseLeave"
+          ref="controlsRef"
+        >
+          <BlobPlayer
+            class="absolute top-0 left-0 z-[-1]"
+            :opacity="showControls ? 1 : 0"
+          />
           <div
-            class="timeline-container"
-            @click="seek"
-            @mousemove="handleTimelineHover"
-            @touchstart="handleTouchStart"
-            @touchmove="handleTouchMove"
-            @touchend="handleTouchEnd"
-            ref="timelineRef"
+            class="container-container"
+            :style="{ opacity: showControls ? 1 : 0 }"
           >
-            <div class="timeline">
-              <div class="progress" :style="{ width: `${progress}%` }"></div>
+            <button @click="togglePlay" class="h-[15px] w-[15px]">
+              <Icon
+                :class="{ hidden: isPlaying }"
+                name="carbon:play-filled-alt"
+                class="w-full h-full block"
+              />
+              <Icon
+                :class="{ hidden: !isPlaying }"
+                name="carbon:pause-filled"
+                class="w-full h-full block"
+              />
+            </button>
+            <div
+              class="timeline-container"
+              @click="seek"
+              @mousemove="handleTimelineHover"
+              @touchstart="handleTouchStart"
+              @touchmove="handleTouchMove"
+              @touchend="handleTouchEnd"
+              ref="timelineRef"
+            >
+              <div class="timeline">
+                <div class="progress" :style="{ width: `${progress}%` }"></div>
+              </div>
             </div>
+            <button @click="toggleFullscreen" class="h-[12px] w-[12px]">
+              <Icon
+                :class="{ hidden: isFullscreen }"
+                name="carbon:maximize"
+                class="w-full h-full block"
+              />
+              <Icon
+                :class="{ hidden: !isFullscreen }"
+                name="carbon:minimize"
+                class="w-full h-full block"
+              />
+            </button>
           </div>
-          <button @click="toggleFullscreen" class="h-[12px] w-[12px]">
-            <Icon
-              :class="{ hidden: isFullscreen }"
-              name="carbon:maximize"
-              class="w-full h-full block"
-            />
-            <Icon
-              :class="{ hidden: !isFullscreen }"
-              name="carbon:minimize"
-              class="w-full h-full block"
-            />
-          </button>
         </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <script setup>
@@ -132,6 +131,7 @@ let observer;
 let animationFrameId;
 const lastClickTime = ref(0);
 let clickTimeout;
+let hasEmittedReady = false;
 
 // Add refs for line positioning
 const controlsRef = ref(null);
@@ -344,10 +344,15 @@ onMounted(() => {
   // Initialize video event listeners
   if (videoRef.value) {
     videoRef.value.addEventListener("loadedmetadata", () => {
-      isVideoReady.value = true;
       duration.value = videoRef.value.duration;
       updateProgress();
-      emit("video-ready");
+      if (!isVideoReady.value) {
+        isVideoReady.value = true;
+      }
+      if (!hasEmittedReady) {
+        emit("video-ready");
+        hasEmittedReady = true;
+      }
     });
 
     // Add waiting event listener for loading state
@@ -372,6 +377,17 @@ onMounted(() => {
     });
 
     videoRef.value.addEventListener("canplay", () => {
+      isLoading.value = false;
+      if (!isVideoReady.value) {
+        isVideoReady.value = true;
+      }
+      if (!hasEmittedReady) {
+        emit("video-ready");
+        hasEmittedReady = true;
+      }
+    });
+
+    videoRef.value.addEventListener("canplaythrough", () => {
       isLoading.value = false;
     });
 
@@ -514,6 +530,16 @@ onUnmounted(() => {
 </script>
 
 <style>
+.player-fade-enter-active,
+.player-fade-leave-active {
+  transition: opacity 0.2s ease-in-out;
+}
+
+.player-fade-enter-from,
+.player-fade-leave-to {
+  opacity: 0;
+}
+
 .player-container-wrapper {
   height: 60dvh;
   transition: opacity 0.2s ease-in-out;

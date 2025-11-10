@@ -50,7 +50,7 @@
           ref="projectsRef"
           class="projects space-y-1 whitespace-nowrap pb-[18px] px-[25px]"
         >
-          <NuxtLink
+          <LinkButton
             v-for="(project, index) in projects"
             :key="project._id"
             :to="`/${project.slug}`"
@@ -58,7 +58,7 @@
             @click="handleProjectClick(project.title, index)"
           >
             {{ project.title }}
-          </NuxtLink>
+          </LinkButton>
         </div>
       </div>
     </div>

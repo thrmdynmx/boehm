@@ -7,7 +7,7 @@
     />
 
     <div
-      class="absolute h-fit w-fit top-[50dvh] -translate-y-[50%] left-[50%] translate-x-[-50%] flex flex-col justify-center items-center transition-[opacity] duration-500"
+      class="absolute h-fit w-fit top-[50dvh] z-[2] -translate-y-[50%] left-[50%] translate-x-[-50%] flex flex-col justify-center items-center transition-[opacity] duration-500"
     >
       <Main />
 
