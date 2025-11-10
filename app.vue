@@ -17,6 +17,23 @@ body {
   height: 100dvh;
 }
 
+/* Prevent double-tap to zoom on mobile devices */
+html {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+}
+
+body {
+  touch-action: manipulation;
+  -ms-touch-action: manipulation;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
+}
+
+* {
+  touch-action: manipulation;
+}
+
 body {
   font-family: Inter, sans-serif;
   -webkit-font-smoothing: antialiased;

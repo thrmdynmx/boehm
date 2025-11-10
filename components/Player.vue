@@ -165,12 +165,12 @@ function togglePlay() {
         resetControlsTimeout();
 
         // Scroll the player into view when it starts playing
-        if (playerContainer.value) {
-          playerContainer.value.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }
+        // if (playerContainer.value) {
+        //   playerContainer.value.scrollIntoView({
+        //     behavior: "smooth",
+        //     block: "center",
+        //   });
+        // }
       })
       .catch((error) => {
         console.error("Error playing video:", error);
